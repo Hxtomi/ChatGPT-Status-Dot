@@ -35,7 +35,8 @@ def main():
     for kind in ['source', 'extension']:
         selected = {name: data for name, data in files.items() if kind == 'source' or name.startswith('extension/') or name in ['LICENSE', 'NOTICE', 'PRIVACY.md']}
         packed = {name.removeprefix('extension/') if kind == 'extension' else name: data for name, data in selected.items()}
-        target = out / f'chatgpt-status-dot-{version}-{kind}.zip'
+        filename = 'chatgpt-status-dot.zip' if kind == 'extension' else f'chatgpt-status-dot-{version}-source.zip'
+        target = out / filename
         if target.is_symlink():
             raise ValueError('Unsafe archive output')
         with zipfile.ZipFile(target, 'w', compression=zipfile.ZIP_DEFLATED) as archive:

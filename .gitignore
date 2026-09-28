@@ -1,6 +1,8 @@
 # Deny by default: explicitly opt reviewed files into version control.
 *
+!/docs/
 !/extension/
+!/media/
 !/scripts/
 !/tests/
 !/.gitignore
@@ -8,14 +10,14 @@
 !/NOTICE
 !/PRIVACY.md
 !/README.md
-!/SECURITY.md
-!/VALIDATION.md
+!/docs/development.md
 !/extension/background.js
 !/extension/content.js
 !/extension/manifest.json
 !/extension/popup.css
 !/extension/popup.html
 !/extension/popup.js
+!/media/settings.png
 !/package.json
 !/release-files.json
 !/scripts/package.py
