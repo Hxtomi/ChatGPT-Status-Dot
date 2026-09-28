@@ -1,0 +1,14 @@
+:root { color-scheme: dark; font: 13px/1.5 system-ui, sans-serif; background: #242630; color: #f0eef7; }
+body { width: 280px; margin: 0; padding: 20px; }
+header { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+strong { font-size: 17px; }
+.toggle { display: flex; align-items: center; gap: 5px; color: #d4d4e0; }
+input[type=checkbox] { accent-color: #91acf2; }
+#status { min-height: 20px; color: #b9c9f5; margin: 18px 0; }
+.color-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-top: 1px solid #3c3e4c; }
+small { display: block; color: #b4b4c6; margin-top: 2px; }
+input[type=color] { width: 42px; height: 34px; border: 1px solid #646778; border-radius: 6px; padding: 3px; background: transparent; cursor: pointer; }
+button { margin-top: 14px; padding: 8px 12px; border: 1px solid #646778; border-radius: 6px; color: inherit; background: #343747; cursor: pointer; }
+button:hover { background: #41465b; }
+:focus-visible { outline: 2px solid #b9c9f5; outline-offset: 3px; }
+.help { margin: 16px 0 0; font-size: 11px; color: #b4b4c6; }

@@ -1,0 +1,13 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Status Dot</title><link rel="stylesheet" href="popup.css"></head>
+<body>
+  <header><strong>Status Dot</strong><label class="toggle"><input id="enabled" type="checkbox"> Enabled</label></header>
+  <p id="status" role="status">Checking current tab…</p>
+  <label class="color-row" for="color"><span><b>Working</b><small>ChatGPT is busy</small></span><input id="color" type="color" value="#91acf2"></label>
+  <label class="color-row" for="doneColor"><span><b>Done</b><small>Finished in the background</small></span><input id="doneColor" type="color" value="#65d6a0"></label>
+  <button id="reset" type="button">Reset defaults</button>
+  <p class="help">The dot clears when you return to a finished chat. Settings stay in this browser.</p>
+  <script src="popup.js"></script>
+</body>
+</html>

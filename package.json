@@ -1,0 +1,13 @@
+{
+  "name": "chatgpt-status-dot",
+  "version": "1.1.0",
+  "private": true,
+  "description": "A minimal Working/Done favicon indicator for ChatGPT",
+  "license": "Apache-2.0",
+  "author": "Hxtomi",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "test": "node --test tests/background.test.cjs",
+    "test:browser": "node tests/browser-smoke.cjs && node tests/browser-update.cjs"
+  }
+}

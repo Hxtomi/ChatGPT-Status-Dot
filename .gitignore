@@ -1,0 +1,24 @@
+# Deny by default: explicitly opt reviewed files into version control.
+*
+!/extension/
+!/scripts/
+!/tests/
+!/.gitignore
+!/LICENSE
+!/NOTICE
+!/PRIVACY.md
+!/README.md
+!/SECURITY.md
+!/VALIDATION.md
+!/extension/background.js
+!/extension/content.js
+!/extension/manifest.json
+!/extension/popup.css
+!/extension/popup.html
+!/extension/popup.js
+!/package.json
+!/release-files.json
+!/scripts/package.py
+!/tests/background.test.cjs
+!/tests/browser-smoke.cjs
+!/tests/browser-update.cjs
