@@ -1,14 +1,72 @@
-:root { color-scheme: dark; font: 13px/1.5 system-ui, sans-serif; background: #242630; color: #f0eef7; }
-body { width: 280px; margin: 0; padding: 20px; }
-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
-strong { font-size: 17px; }
-.toggle { display: flex; align-items: center; gap: 5px; color: #d4d4e0; }
-input[type=checkbox] { accent-color: #91acf2; }
-#status { min-height: 20px; color: #b9c9f5; margin: 18px 0; }
-.color-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-top: 1px solid #3c3e4c; }
-small { display: block; color: #b4b4c6; margin-top: 2px; }
-input[type=color] { width: 42px; height: 34px; border: 1px solid #646778; border-radius: 6px; padding: 3px; background: transparent; cursor: pointer; }
-button { margin-top: 14px; padding: 8px 12px; border: 1px solid #646778; border-radius: 6px; color: inherit; background: #343747; cursor: pointer; }
-button:hover { background: #41465b; }
-:focus-visible { outline: 2px solid #b9c9f5; outline-offset: 3px; }
-.help { margin: 16px 0 0; font-size: 11px; color: #b4b4c6; }
+:root {
+  color-scheme: dark;
+  font: 13px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: #1e2024;
+  color: #eeeff2;
+  --working: #91acf2;
+  --done: #65d6a0;
+  --muted: #a5a8b3;
+}
+* { box-sizing: border-box; }
+body { width: 360px; margin: 0; padding: 22px; }
+button, input { font: inherit; }
+.header { display: flex; justify-content: space-between; align-items: center; }
+h1 { display: flex; align-items: center; gap: 7px; margin: 0; font-size: 20px; font-weight: 650; letter-spacing: -.6px; }
+.brand-dot { width: 6px; height: 6px; margin-top: 4px; border-radius: 50%; background: var(--working); }
+.subtitle { margin: 2px 0 0; color: var(--muted); font-size: 12px; }
+.toggle { position: relative; display: flex; align-items: center; gap: 9px; min-height: 44px; cursor: pointer; color: #c6c8d1; font-size: 12px; }
+.toggle input { position: absolute; right: 0; width: 38px; height: 24px; margin: 0; opacity: 0; cursor: pointer; }
+.switch { width: 38px; height: 22px; border-radius: 20px; background: #555966; transition: background .15s; pointer-events: none; }
+.switch::after { content: ""; display: block; width: 16px; height: 16px; margin: 3px; border-radius: 50%; background: #f3f4f7; transition: transform .15s; }
+.toggle input:checked + .switch { background: #91acf2; }
+.toggle input:checked + .switch::after { transform: translateX(16px); background: #1e273b; }
+.toggle input:focus-visible + .switch { outline: 2px solid #c2d0fa; outline-offset: 4px; }
+.toggle:has(input:disabled) { cursor: wait; }
+.preview { margin: 22px 0 20px; overflow: hidden; border: 1px solid #34373e; border-radius: 12px; background: #181a1e; }
+.preview-caption { padding: 10px 13px 9px; font-size: 11px; color: var(--muted); }
+.tab-strip { display: flex; gap: 6px; padding: 0 10px; border-bottom: 5px solid #2c2f35; }
+.tab { display: flex; align-items: center; gap: 8px; width: 50%; height: 38px; padding: 0 11px; border-radius: 8px 8px 0 0; background: #2c2f35; color: #e1e3e9; font-size: 12px; }
+.tab-icon { position: relative; display: block; flex: none; width: 17px; height: 17px; }
+.tab-icon svg { display: block; width: 17px; height: 17px; fill: none; stroke: #d0d3dd; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
+.dot { position: absolute; right: -3px; bottom: -2px; width: 9px; height: 9px; border: 1.5px solid #2c2f35; border-radius: 50%; }
+.working { background: var(--working); }
+.done { background: var(--done); }
+.tab-close { margin-left: auto; color: #acafba; font-size: 16px; line-height: 1; }
+.preview-labels { display: grid; grid-template-columns: 1fr 1fr; padding: 7px 10px 9px; text-align: center; font-size: 11px; color: #b7bac4; }
+body[data-enabled="false"] .dot { visibility: hidden; }
+body[data-enabled="false"] .brand-dot { background: #777c8b; }
+.section-heading { display: flex; align-items: center; justify-content: space-between; margin: 0 0 8px; }
+h2 { margin: 0; font-size: 13px; font-weight: 600; color: #d9dbe3; }
+#reset { display: flex; align-items: center; gap: 5px; min-height: 30px; padding: 4px 6px; margin-right: -6px; border: 0; border-radius: 6px; background: transparent; color: var(--muted); cursor: pointer; font-size: 12px; }
+#reset svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+#reset:hover { color: #f0f1f5; background: #30333a; }
+#reset:disabled { cursor: wait; }
+.colors { overflow: hidden; border: 1px solid #393c44; border-radius: 12px; background: #272a30; }
+.color-row { display: flex; align-items: center; justify-content: space-between; min-height: 72px; padding: 12px 14px; gap: 16px; cursor: pointer; }
+.color-row + .color-row { border-top: 1px solid #3a3d45; }
+.color-row:hover { background: #2d3037; }
+.color-name { display: block; font-size: 14px; font-weight: 600; }
+.color-description { display: block; margin-top: 3px; font-size: 12px; color: #afb2bf; }
+input[type="color"] { flex: none; width: 40px; height: 40px; padding: 4px; border: 1px solid #737887; border-radius: 50%; background: transparent; cursor: pointer; }
+input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+input[type="color"]::-webkit-color-swatch { border: 0; border-radius: 50%; }
+input[type="color"]:hover { border-color: #d1d6e5; }
+.hint { margin: 11px 0 0; font-size: 11px; color: var(--muted); }
+.status-line { display: flex; align-items: baseline; gap: 8px; margin-top: 19px; padding-top: 14px; border-top: 1px solid #363940; color: #b9bdc9; font-size: 11px; }
+.status-dot { flex: none; width: 6px; height: 6px; border-radius: 50%; background: #8a8f9d; }
+.status-line[data-state="working"] .status-dot { background: var(--working); }
+.status-line[data-state="done"] .status-dot { background: var(--done); }
+.status-line[data-state="error"] { color: #f2b8ac; }
+.status-line[data-state="error"] .status-dot { background: currentColor; }
+#status { margin: 0; }
+button:focus-visible, input[type="color"]:focus-visible { outline: 2px solid #c2d0fa; outline-offset: 3px; }
+@media (prefers-reduced-motion: reduce) {
+  .switch, .switch::after { transition: none; }
+}
+@media (forced-colors: active) {
+  .switch { border: 1px solid ButtonText; }
+  .switch::after { background: ButtonText; }
+  .toggle input:checked + .switch { background: Highlight; }
+  .toggle input:checked + .switch::after { background: HighlightText; }
+  .dot, input[type="color"] { forced-color-adjust: none; }
+}

@@ -1,7 +1,7 @@
 (() => {
   "use strict";
   const KEY = "__chatgptActivityDotV1";
-  const BUILD = "1.1.1";
+  const BUILD = "1.2.0";
   const HANDOFF_EVENT = "chatgpt-activity-dot:handoff";
   const HANDOFF_ATTRIBUTE = "data-chatgpt-activity-dot-handoff";
   const ICON_ID = "chatgpt-activity-dot-favicon";

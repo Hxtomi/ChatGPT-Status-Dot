@@ -22,7 +22,9 @@ Using the source code instead? Select its `extension` folder.
 
 Open **ChatGPT Status Dot** from Chrome's extensions menu to change either color, switch the indicator off, or reset the defaults.
 
-<img src="media/settings.png" width="320" alt="Status Dot settings: blue for Working, green for Done, an on/off switch, and Reset defaults.">
+The tab preview updates as you pick a color.
+
+<img src="media/settings.png" width="360" alt="Status Dot settings with a live tab preview, blue Working and green Done colors, and an on/off switch.">
 
 Keep the chat tab open while you wait. Reloading it clears the unread indicator.
 
