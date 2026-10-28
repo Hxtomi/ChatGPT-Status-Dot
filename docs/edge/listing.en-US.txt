@@ -1,0 +1,54 @@
+Name
+ChatGPT Status Dot
+
+Short description
+See when ChatGPT is working or a response is ready, with a colored dot on the tab icon.
+
+Full description
+See when ChatGPT is working or your answer is ready, with a colored dot on the tab icon in Microsoft Edge.
+
+Work in another tab while ChatGPT generates a response. A small status dot helps you see when to come back:
+
+• Blue: ChatGPT is generating a response.
+• Green: a response finished while the chat was out of focus.
+• No dot: nothing is running or waiting for you to return.
+
+Return to the chat to clear the green dot. If you are already watching the answer, the dot clears when generation finishes. Clicking Stop clears the indicator without marking the cancelled response as unread. Each ChatGPT tab has its own status.
+
+Make it yours
+Choose separate Working and Done colors in the extension’s settings. See the current tab’s status, turn the indicator off, or restore the defaults. The status updates while the settings window stays open.
+
+Local settings and clear privacy
+Your colors and on/off preference are saved locally in your browser. The extension does not read message transcripts or prompt input. The publisher receives no conversations, account details, or usage analytics, and operates no extension backend. Public favicon images may be downloaded from permitted ChatGPT image hosts without cookies or a referrer; the image server can see your IP address. See the privacy policy for details.
+
+Good to know
+Keep the ChatGPT tab open. Reloading or closing it clears unread status. The indicator does not keep sleeping, discarded, or closed tabs running and does not show desktop notifications. ChatGPT must be accessible; sign in if the site requires it. Changes to ChatGPT’s interface may require an extension update. English and Russian generation-control labels are supported; the settings interface is in English.
+
+Free and open source
+No paid extension features and no extension account required. Licensed under Apache-2.0. Explore the project on GitHub:
+https://github.com/Hxtomi/ChatGPT-Status-Dot
+
+Works on chatgpt.com and the legacy chat.openai.com origin when available. Does not unlock paid ChatGPT features.
+
+An independent project by Hxtomi. Not affiliated with, endorsed by, or sponsored by OpenAI or Microsoft. ChatGPT is a trademark of OpenAI.
+
+Support URL
+https://github.com/Hxtomi/ChatGPT-Status-Dot/issues
+
+Website URL
+https://github.com/Hxtomi/ChatGPT-Status-Dot
+
+Privacy policy URL
+https://github.com/Hxtomi/ChatGPT-Status-Dot/blob/main/PRIVACY.md
+
+Category
+Productivity
+
+Search terms (add each line separately)
+ChatGPT
+status dot
+tab indicator
+response ready
+generation status
+favicon
+productivity

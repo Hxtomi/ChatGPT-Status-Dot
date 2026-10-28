@@ -1,0 +1,12 @@
+No separate extension account, purchase, or paid ChatGPT plan is required.
+
+Testing requires access to https://chatgpt.com/. If the website requests sign-in, reviewers may use their own standard ChatGPT test account.
+
+1. Install the extension in Microsoft Edge and open ChatGPT.
+2. Request a long response. A blue dot should appear on the tab icon during generation.
+3. Switch to another tab before generation finishes. The dot should turn green when the response is complete.
+4. Return to ChatGPT. The green dot should clear.
+5. Test both dot colors, the Enabled switch, and Reset defaults in the extension popup.
+6. Start another response and click ChatGPT's Stop control. The dot should clear without turning green.
+
+Each ChatGPT tab is tracked independently. Reloading clears unread status. The extension does not prevent Edge from sleeping or discarding tabs.

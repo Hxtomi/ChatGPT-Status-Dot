@@ -2,7 +2,9 @@
 from pathlib import Path, PurePosixPath
 import hashlib
 import json
+import re
 import stat
+import struct
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -25,9 +27,30 @@ def main():
             raise ValueError('Missing or unsafe release file: ' + name)
         files[name] = current.read_bytes()
 
-    version = json.loads(files['extension/manifest.json'])['version']
-    if not version or any(c not in '0123456789.' for c in version):
+    manifest = json.loads(files['extension/manifest.json'])
+    version = manifest['version']
+    if not re.fullmatch(r'(0|[1-9][0-9]*)(\.(0|[1-9][0-9]*)){0,3}', version) or not any(int(part) for part in version.split('.')) or any(int(part) > 65535 for part in version.split('.')):
         raise ValueError('Invalid release version')
+    package_version = json.loads(files['package.json'])['version']
+    build = re.search(rb'const BUILD = "([^"]+)";', files['extension/content.js'])
+    if package_version != version or not build or build[1].decode() != version:
+        raise ValueError('Manifest, package.json and content BUILD versions must match')
+    if 'update_url' in manifest:
+        raise ValueError('Edge Add-ons package must not contain update_url')
+    resources = [manifest['background']['service_worker'], manifest['action']['default_popup']]
+    for script in manifest['content_scripts']:
+        resources.extend(script['js'])
+    for size in (16, 32, 48, 128):
+        name = manifest['icons'][str(size)]
+        if manifest['action']['default_icon'][str(size)] != name:
+            raise ValueError('Extension and action icons must match')
+        data = files['extension/' + name]
+        if data[:8] != b'\x89PNG\r\n\x1a\n' or struct.unpack('>II', data[16:24]) != (size, size):
+            raise ValueError('Invalid PNG icon dimensions: ' + name)
+        resources.append(name)
+    resources.extend(re.findall(r'(?:src|href)="([^"#]+)"', files['extension/popup.html'].decode()))
+    if any('extension/' + name not in files for name in resources):
+        raise ValueError('A manifest or popup resource is missing from release-files.json')
     out = ROOT / 'dist'
     out.mkdir(exist_ok=True)
     if out.is_symlink() or not out.resolve().is_relative_to(ROOT):

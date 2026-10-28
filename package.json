@@ -1,6 +1,6 @@
 {
   "name": "chatgpt-status-dot",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "private": true,
   "description": "Shows ChatGPT's status on the tab icon.",
   "license": "Apache-2.0",
@@ -9,7 +9,8 @@
     "node": ">=22"
   },
   "scripts": {
-    "test": "node --test tests/background.test.cjs",
-    "test:browser": "node tests/browser-smoke.cjs && node tests/browser-update.cjs"
+    "test": "node --test tests/background.test.cjs tests/popup.test.cjs",
+    "test:browser": "node tests/browser-smoke.cjs && node tests/browser-update.cjs",
+    "test:live": "node tests/browser-live.cjs"
   }
 }

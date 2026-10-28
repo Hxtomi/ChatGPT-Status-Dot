@@ -4,7 +4,7 @@ const path = require('node:path');
 const { spawn } = require('node:child_process');
 const assert = require('node:assert/strict');
 const project = path.resolve(__dirname, '..');
-const extension = path.join(project, 'extension');
+const extension = process.env.BROWSER_EXTENSION_DIR || path.join(project, 'extension');
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 const cases = [];
 const external = [];
@@ -24,7 +24,7 @@ class CDP {
       if (data.id) {
         const pending = this.pending.get(data.id); if (!pending) return;
         this.pending.delete(data.id); clearTimeout(pending.timeout);
-        if (data.error) pending.reject(new Error(JSON.stringify(data.error))); else pending.resolve(data.result);
+        if (data.error) pending.reject(new Error(pending.method + ': ' + JSON.stringify(data.error))); else pending.resolve(data.result);
       } else this.events.get(data.method)?.(data.params);
     });
   }
@@ -33,7 +33,7 @@ class CDP {
     return new Promise((resolve, reject) => {
       const id = ++this.sequence;
       const timeout = setTimeout(() => { this.pending.delete(id); reject(new Error(`CDP timeout: ${method}`)); }, 15000);
-      this.pending.set(id, { resolve, reject, timeout });
+      this.pending.set(id, { resolve, reject, timeout, method });
       this.socket.send(JSON.stringify({ id, method, params }));
     });
   }
@@ -115,6 +115,31 @@ let browserVersion;
   assert.ok(worker, 'Unpacked extension actually loaded (service worker present)');
   const workerClient = new CDP(`ws://127.0.0.1:${port}/devtools/page/${worker.targetId}`);
   const stop = 'document.getElementById("composer").insertAdjacentHTML("beforeend",\'<button id="stop" type="button" data-testid="stop-button" aria-label="Stop streaming">Stop</button>\')';
+  await test('Edge favicon request omits a seeded cookie and referrer at the network layer', async () => {
+    const url = 'https://cdn.oaistatic.com/assets/favicon-privacy-test.svg';
+    await workerClient.send('Network.enable');
+    await first.send('Network.setCookie', { name: 'dot_neutral_fixture', value: 'test', url: 'https://cdn.oaistatic.com/', secure: true, sameSite: 'None' });
+    assert.ok((await first.send('Network.getCookies', { urls: [url] })).cookies.some(c => c.name === 'dot_neutral_fixture'));
+    let request;
+    workerClient.events.set('Fetch.requestPaused', params => {
+      request = params.request;
+      void workerClient.send('Fetch.fulfillRequest', { requestId: params.requestId, responseCode: 200,
+        responseHeaders: [{ name: 'Content-Type', value: 'image/svg+xml' }], body: Buffer.from(baseSvg).toString('base64') });
+    });
+    await workerClient.send('Fetch.enable', { patterns: [{ urlPattern: url, requestStage: 'Request' }] });
+    try {
+      const result = await workerClient.eval(`(async()=>{const [tab]=await chrome.tabs.query({url:'https://chatgpt.com/c/activity-dot-chat-fixture'});const [{result}]=await chrome.scripting.executeScript({target:{tabId:tab.id},func:url=>chrome.runtime.sendMessage({type:'activity-dot:public-favicon',url}),args:[${JSON.stringify(url)}]});return result})()`);
+      assert.ok(result.dataUrl.startsWith('data:image/svg+xml;base64,'));
+      assert.equal(request.url, url);
+      const names = Object.keys(request.headers).map(name => name.toLowerCase());
+      assert.ok(!names.includes('cookie')); assert.ok(!names.includes('referer'));
+    } finally {
+      await workerClient.send('Fetch.disable');
+      workerClient.events.delete('Fetch.requestPaused');
+      await first.send('Network.deleteCookies', { name: 'dot_neutral_fixture', url: 'https://cdn.oaistatic.com/' });
+      await workerClient.send('Network.disable');
+    }
+  });
   await test('Idle page keeps the native icon', async () => assert.equal(await first.eval(overlay), 0));
   await test('Chat streaming shows one bottom-right Working badge', async () => {
     await first.eval(stop); await until(first, `${overlay} === 1`);
@@ -221,11 +246,78 @@ let browserVersion;
     await browser.send('Target.closeTarget', { targetId });
     await first.send('Page.bringToFront');
   });
+  await test('An open Edge toolbar popup refreshes when generation finishes', async () => {
+    await first.eval(stop); await until(first, `${overlay} === 1`);
+    await workerClient.eval('chrome.action.openPopup()');
+    const origin = worker.url.slice(0, worker.url.lastIndexOf('/'));
+    const target = (await browser.send('Target.getTargets')).targetInfos.find(t => t.url === `${origin}/popup.html`);
+    assert.ok(target, 'The actual toolbar popup opened');
+    const popup = new CDP(`ws://127.0.0.1:${port}/devtools/page/${target.targetId}`);
+    await until(popup, `document.getElementById('status')?.textContent === 'ChatGPT is working'`);
+    assert.equal(await popup.eval('document.hidden'), false);
+    await first.eval('document.getElementById("stop").remove()');
+    await until(popup, `['Response ready','No response in progress'].includes(document.getElementById('status').textContent)`, 6000);
+    await popup.eval('window.close()');
+    await first.send('Page.bringToFront'); await until(first, `${overlay} === 0`);
+  });
   await test('SPA body replacement and Russian stop labels are detected', async () => {
     await first.eval(`history.pushState({},'', '/c/new-fixture');document.body.innerHTML='<main><form><button aria-label="Остановить генерацию">Стоп</button></form></main>'`);
     await until(first, `${overlay} === 1`);
     await first.eval(`document.body.innerHTML='<main><form><button>Отправить</button></form></main>'`);
     await until(first, `${overlay} === 0`);
+  });
+  await test('English, Russian and text-only composer Stop labels work', async () => {
+    for (const label of ['Stop generating', 'Stop responding', 'Остановить ответ', 'Остановить выполнение', 'Остановить']) {
+      await first.eval(`document.querySelector('form').innerHTML='<button type="button" aria-label="${label}">Stop</button>'`);
+      await until(first, `${overlay} === 1`);
+      await first.eval(`document.querySelector('form button').click()`); await until(first, `${overlay} === 0`);
+      await first.eval(`document.querySelector('form').innerHTML=''`); await wait(160);
+    }
+    await first.eval(`document.querySelector('form').innerHTML='<button type="button">Остановить генерацию</button>'`);
+    await until(first, `${overlay} === 1`);
+    await first.eval(`document.querySelector('form button').firstChild.data='Отправить'`);
+    await until(first, `${overlay} === 0`);
+  });
+  await test('Leaving a conversation cancels its pending completion; Back clears unread', async () => {
+    await first.eval(`document.querySelector('form').innerHTML='<button type="button" data-testid="stop-button">Stop</button>'`);
+    await until(first, `${overlay} === 1`);
+    await first.eval(`document.querySelector('form').innerHTML=''`); await wait(160);
+    await first.eval(`history.pushState({}, '', '/c/route-after-stop');document.querySelector('main').append('New chat')`);
+    await until(first, `${overlay} === 0`); await wait(650);
+    const routeState = await workerClient.eval(`(async()=>{const [tab]=await chrome.tabs.query({url:'https://chatgpt.com/c/route-after-stop'});return chrome.tabs.sendMessage(tab.id,{type:'activity-dot:status'})})()`);
+    assert.equal(routeState.busy, false); assert.equal(routeState.unread, false); assert.equal(routeState.reason, 'route-changed');
+    await first.eval(`history.back()`); await until(first, `location.pathname === '/c/new-fixture'`);
+    assert.equal(await first.eval(overlay), 0);
+  });
+  await test('Streaming a long page avoids repeated control scans and unrelated layout reads', async () => {
+    await workerClient.eval(`(async()=>{const [tab]=await chrome.tabs.query({url:'https://chatgpt.com/c/new-fixture'});await chrome.scripting.executeScript({target:{tabId:tab.id},func:()=>{
+      const originalQuery=Document.prototype.querySelectorAll, originalRects=Element.prototype.getClientRects;
+      globalThis.__dotMetrics={scans:0,unrelatedLayouts:0};
+      Document.prototype.querySelectorAll=function(selector){if(selector.includes('button'))globalThis.__dotMetrics.scans++;return originalQuery.call(this,selector)};
+      Element.prototype.getClientRects=function(){if(this.classList.contains('long-page-copy'))globalThis.__dotMetrics.unrelatedLayouts++;return originalRects.call(this)};
+      globalThis.__restoreDotMetrics=()=>{Document.prototype.querySelectorAll=originalQuery;Element.prototype.getClientRects=originalRects};
+    }});})()`);
+    await first.eval(`document.querySelector('main').insertAdjacentHTML('afterbegin', '<div id="long-page">'+('<p><span>Neutral test text</span><button class="long-page-copy" aria-label="Copy">Copy</button></p>'.repeat(2500))+'</div>')`);
+    await wait(250);
+    const metrics = () => workerClient.eval(`(async()=>{const [tab]=await chrome.tabs.query({url:'https://chatgpt.com/c/new-fixture'});const [{result}]=await chrome.scripting.executeScript({target:{tabId:tab.id},func:()=>({...globalThis.__dotMetrics})});return result})()`);
+    const before = await metrics();
+    await first.eval(`for(const span of document.querySelectorAll('#long-page span')){span.firstChild.data+='.';span.className='syntax-highlight'}`);
+    await wait(350); const after = await metrics();
+    assert.equal(after.scans, before.scans, 'Message text and highlighting do not trigger detection');
+    assert.equal(after.unrelatedLayouts, 0, 'Unrelated Copy buttons never force layout');
+  });
+  await test('Disabled indicator does no control scans, ignores completion, and rescans on enable', async () => {
+    await workerClient.eval('chrome.storage.local.set({enabled:false})'); await wait(180);
+    const metric = () => workerClient.eval(`(async()=>{const [tab]=await chrome.tabs.query({url:'https://chatgpt.com/c/new-fixture'});const [{result}]=await chrome.scripting.executeScript({target:{tabId:tab.id},func:()=>globalThis.__dotMetrics.scans});return result})()`);
+    const before = await metric();
+    await first.eval(`document.querySelector('form').innerHTML='<button type="button" data-testid="stop-button">Stop</button>';document.getElementById('long-page').append('More text');window.dispatchEvent(new Event('focus'))`);
+    await wait(500); assert.equal(await metric(), before); assert.equal(await first.eval(overlay), 0);
+    const state = await workerClient.eval(`(async()=>{const [tab]=await chrome.tabs.query({url:'https://chatgpt.com/c/new-fixture'});return chrome.tabs.sendMessage(tab.id,{type:'activity-dot:status'})})()`);
+    assert.equal(state.enabled, false); assert.equal(state.busy, false); assert.equal(state.unread, false);
+    await workerClient.eval('chrome.storage.local.set({enabled:true})'); await until(first, `${overlay} === 1`);
+    await first.eval(`document.querySelector('form').innerHTML=''`); await until(first, `${overlay} === 0`);
+    await workerClient.eval(`(async()=>{const [tab]=await chrome.tabs.query({url:'https://chatgpt.com/c/new-fixture'});await chrome.scripting.executeScript({target:{tabId:tab.id},func:()=>globalThis.__restoreDotMetrics()})})()`);
+    await first.eval(`document.getElementById('long-page').remove()`);
   });
   await workerClient.eval('chrome.storage.local.set({enabled:true,color:"#91ACF2"})');
   const count = external.filter(url => !url.endsWith('/favicon.ico')).length;
@@ -233,7 +325,7 @@ let browserVersion;
   console.log(`PASS ${cases.length}/${cases.length} browser scenarios; no unexpected network requests`);
 })().catch(error => { console.error(error.stack); process.exitCode = 1; }).finally(async () => {
   fs.writeFileSync(reportPath, JSON.stringify({
-    date: new Date().toISOString(), browser: browserVersion?.product, source: 'Real browser with unpacked extension; synthetic ChatGPT DOM fixtures',
+    date: new Date().toISOString(), browser: browserVersion?.product, extensionDirectory: extension, source: 'Real browser with unpacked extension; synthetic ChatGPT DOM fixtures',
     liveChatGPTVerified: false, cases, externalRequests: external, success: !process.exitCode
   }, null, 2));
   if (browser) await browser.send('Browser.close').catch(() => {});

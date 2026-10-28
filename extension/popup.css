@@ -1,14 +1,23 @@
 :root {
   color-scheme: dark;
   font: 13px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  background: #1e2024;
+  background: #181a1e;
   color: #eeeff2;
   --working: #91acf2;
   --done: #65d6a0;
   --muted: #a5a8b3;
 }
 * { box-sizing: border-box; }
-body { width: 360px; margin: 0; padding: 22px; }
+html { width: 364px; padding: 2px; border-radius: 18px; overflow: hidden; }
+body {
+  width: 360px;
+  margin: 0;
+  padding: 17px 21px;
+  border: 1px solid #14161a;
+  border-radius: 16px;
+  background: #1e2024;
+  overflow: hidden;
+}
 button, input { font: inherit; }
 .header { display: flex; justify-content: space-between; align-items: center; }
 h1 { display: flex; align-items: center; gap: 7px; margin: 0; font-size: 20px; font-weight: 650; letter-spacing: -.6px; }
@@ -28,7 +37,7 @@ h1 { display: flex; align-items: center; gap: 7px; margin: 0; font-size: 20px; f
 .tab { display: flex; align-items: center; gap: 8px; width: 50%; height: 38px; padding: 0 11px; border-radius: 8px 8px 0 0; background: #2c2f35; color: #e1e3e9; font-size: 12px; }
 .tab-icon { position: relative; display: block; flex: none; width: 17px; height: 17px; }
 .tab-icon svg { display: block; width: 17px; height: 17px; fill: none; stroke: #d0d3dd; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
-.dot { position: absolute; right: -3px; bottom: -2px; width: 9px; height: 9px; border: 1.5px solid #2c2f35; border-radius: 50%; }
+.dot { position: absolute; right: -3px; bottom: -2px; width: 10.35px; height: 10.35px; border: 1.725px solid #2c2f35; border-radius: 50%; }
 .working { background: var(--working); }
 .done { background: var(--done); }
 .tab-close { margin-left: auto; color: #acafba; font-size: 16px; line-height: 1; }

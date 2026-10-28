@@ -1,7 +1,7 @@
 (() => {
   "use strict";
   const KEY = "__chatgptActivityDotV1";
-  const BUILD = "1.2.1";
+  const BUILD = "1.2.2";
   const HANDOFF_EVENT = "chatgpt-activity-dot:handoff";
   const HANDOFF_ATTRIBUTE = "data-chatgpt-activity-dot-handoff";
   const ICON_ID = "chatgpt-activity-dot-favicon";
@@ -19,6 +19,7 @@
     "остановить задачу", "остановить работу", "прекратить генерацию"
   ]);
   const FORMS = 'form, [data-type="unified-composer"], [data-testid="composer"], #composer-background';
+  const CONTROLS = 'button,[role="button"]';
   let previous = globalThis[KEY]?.status();
   // Reloading an extension creates a new isolated world, while the old world's
   // DOM observers can remain alive. Ask that instance to restore and detach.
@@ -76,8 +77,9 @@
   const seen = () => document.visibilityState === "visible" && document.hasFocus();
   const phase = () => busy ? "working" : unread ? "unread" : "idle";
   function stopReason(button) {
-    if (!shown(button)) return null;
-    if (button.matches(STOP_SELECTORS)) return button.getAttribute("data-testid");
+    // Most buttons on a long conversation are unrelated. Do not force layout
+    // or computed-style reads for them on every composer update.
+    if (button.matches(STOP_SELECTORS)) return shown(button) ? button.getAttribute("data-testid") : null;
     const label = normalized(button.getAttribute("aria-label") || button.getAttribute("title"));
     if (STOP_NAMES.has(label)) {
       // A plain Stop outside the composer can belong to an audio/video player.
@@ -85,13 +87,17 @@
         if (!button.closest(FORMS)) return null;
         if (button.closest('[data-testid*="audio"], [data-testid*="voice"], [data-testid*="player"], [role="dialog"]')) return null;
       }
-      return `label:${label}`;
+      return shown(button) ? `label:${label}` : null;
     }
-    if (!label && button.closest(FORMS) && STOP_NAMES.has(normalized(button.textContent))) return "composer-stop";
+    if (!label && STOP_NAMES.has(normalized(button.textContent)) && button.closest(FORMS) && shown(button)) return "composer-stop";
     return null;
   }
   function detect() {
-    for (const button of document.querySelectorAll('button,[role="button"]')) {
+    for (const button of document.querySelectorAll(STOP_SELECTORS)) {
+      const reason = stopReason(button);
+      if (reason) return reason;
+    }
+    for (const button of document.querySelectorAll(CONTROLS)) {
       const reason = stopReason(button);
       if (reason) return reason;
     }
@@ -146,12 +152,13 @@
       context.stroke();
       context.beginPath(); context.moveTo(18, 46); context.lineTo(14, 56); context.lineTo(32, 46); context.stroke();
     }
-    // 5.25 px dot at a 16 px tab-icon size, with a fine two-tone rim.
-    context.beginPath(); context.arc(50.5, 50.5, 13.2, 0, Math.PI * 2);
+    // ~6.05 px dot at a 16 px tab-icon size: 15% larger with the same two-tone rim.
+    // Move the center inward so the larger outer rim stays inside the 64 px canvas.
+    context.beginPath(); context.arc(48.5, 48.5, 15.2, 0, Math.PI * 2);
     context.fillStyle = "#292633"; context.fill();
-    context.beginPath(); context.arc(50.5, 50.5, 11.9, 0, Math.PI * 2);
+    context.beginPath(); context.arc(48.5, 48.5, 13.7, 0, Math.PI * 2);
     context.fillStyle = "#FAF7FF"; context.fill();
-    context.beginPath(); context.arc(50.5, 50.5, 10.5, 0, Math.PI * 2);
+    context.beginPath(); context.arc(48.5, 48.5, 12.1, 0, Math.PI * 2);
     context.fillStyle = color; context.fill();
     // A site's scalable SVG icon can outrank an appended PNG in Edge.
     // Use a self-contained SVG candidate of the same priority, appended last.
@@ -201,10 +208,12 @@
     document.head?.append(overlay);
   }
   function scan() {
+    clearTimeout(scanTimer);
     scanTimer = null;
-    if (disposed) return;
+    if (disposed || !settings.enabled) return;
     if (location.pathname !== route) {
       route = location.pathname; busy = false; unread = false; stoppedByUser = false;
+      lastReason = "route-changed";
       clearTimeout(idleTimer); idleTimer = null; void render();
     }
     const reason = detect();
@@ -222,18 +231,27 @@
       // Avoid flicker during a short handover from thinking to tools/answering.
       idleTimer = setTimeout(() => {
         idleTimer = null;
+        if (disposed || !settings.enabled) return;
+        if (location.pathname !== route) { scan(); return; }
         if (!detect()) { busy = false; unread = !seen(); lastReason = unread ? "completed-unread" : "completed-seen"; void render(); }
         else scan();
       }, 500);
     }
   }
   function schedule() {
-    if (!disposed && scanTimer === null) scanTimer = setTimeout(scan, 80);
+    if (!disposed && settings.enabled && scanTimer === null) scanTimer = setTimeout(scan, 80);
   }
-  const bodyObserver = new MutationObserver(schedule);
-  bodyObserver.observe(document.documentElement, {
-    subtree: true, childList: true, characterData: true, attributes: true,
-    attributeFilter: ["aria-label", "aria-hidden", "title", "data-testid", "hidden", "class", "style"]
+  const hasControl = node => node instanceof Element && (node.matches(CONTROLS) || !!node.querySelector(CONTROLS));
+  const bodyObserver = new MutationObserver(records => {
+    // Streaming text and syntax highlighting outside controls cannot change
+    // generation state. Still notice controls added/removed in whole subtrees,
+    // text-only Stop labels, and visibility changes on their ancestors.
+    if (location.pathname !== route || records.some(record => {
+      if (record.type === "characterData") return !!record.target.parentElement?.closest(CONTROLS);
+      if (record.target instanceof Element && record.target.closest(CONTROLS)) return true;
+      if (record.type === "attributes") return hasControl(record.target);
+      return [...record.addedNodes, ...record.removedNodes].some(hasControl);
+    })) schedule();
   });
   const headObserver = new MutationObserver(records => {
     const iconChanged = records.some(record => {
@@ -249,17 +267,27 @@
     const ownRemoved = phase() !== "idle" && settings.enabled && overlay && !overlay.isConnected;
     if (iconChanged || ownRemoved) void render();
   });
-  if (document.head) headObserver.observe(document.head, {
-    childList: true, subtree: true, attributes: true, attributeFilter: ["href", "rel", "sizes", "type", "media"]
-  });
+  function observe() {
+    bodyObserver.disconnect(); headObserver.disconnect();
+    if (!settings.enabled || disposed) return;
+    bodyObserver.observe(document.documentElement, {
+      subtree: true, childList: true, characterData: true, attributes: true,
+      attributeFilter: ["aria-label", "aria-hidden", "title", "data-testid", "hidden", "class", "style", "role"]
+    });
+    if (document.head) headObserver.observe(document.head, {
+      childList: true, subtree: true, attributes: true, attributeFilter: ["href", "rel", "sizes", "type", "media"]
+    });
+  }
   const scheme = matchMedia("(prefers-color-scheme: dark)");
   const schemeChanged = () => { if (phase() !== "idle") void render(); };
   scheme.addEventListener("change", schemeChanged);
   const wake = () => {
+    if (!settings.enabled || disposed) return;
     if (unread && seen()) { unread = false; lastReason = "seen"; void render(); }
     scan(); if (busy) void render();
   };
   const clicked = event => {
+    if (!settings.enabled || disposed) return;
     const button = event.target instanceof Element && event.target.closest('button,[role="button"]');
     if (!button) return;
     if (stopReason(button)) {
@@ -269,16 +297,23 @@
       stoppedByUser = false; schedule();
     }
   };
-  const submitted = event => { if (event.target instanceof Element && event.target.matches(FORMS)) { stoppedByUser = false; schedule(); } };
+  const submitted = event => { if (settings.enabled && event.target instanceof Element && event.target.matches(FORMS)) { stoppedByUser = false; schedule(); } };
   document.addEventListener("click", clicked, true);
   document.addEventListener("submit", submitted, true);
   document.addEventListener("visibilitychange", wake);
   window.addEventListener("pageshow", wake);
   window.addEventListener("focus", wake);
+  window.addEventListener("popstate", wake);
 
   const changed = (changes, area) => {
     if (area !== "local") return;
-    if (changes.enabled) settings.enabled = changes.enabled.newValue !== false;
+    if (changes.enabled) {
+      settings.enabled = changes.enabled.newValue !== false;
+      clearTimeout(scanTimer); clearTimeout(idleTimer); scanTimer = idleTimer = null;
+      busy = false; unread = false; stoppedByUser = false; lastReason = settings.enabled ? "enabled" : "disabled";
+      observe();
+      scan();
+    }
     for (const key of ["color", "doneColor"]) {
       if (changes[key]) settings[key] = /^#[0-9a-f]{6}$/i.test(changes[key].newValue) ? changes[key].newValue : DEFAULTS[key];
     }
@@ -297,9 +332,11 @@
       for (const key of ["color", "doneColor"]) {
         if (/^#[0-9a-f]{6}$/i.test(values[key])) settings[key] = values[key];
       }
+      if (!settings.enabled) { busy = false; unread = false; stoppedByUser = false; lastReason = "disabled"; }
+      observe(); scan();
       void render();
-    }).catch(() => {});
-  } catch { /* Standalone DOM tests do not have extension APIs. */ }
+    }).catch(() => { observe(); scan(); });
+  } catch { observe(); scan(); /* Standalone DOM tests do not have extension APIs. */ }
   const handoff = () => {
     document.documentElement.setAttribute(HANDOFF_ATTRIBUTE, JSON.stringify({
       at: Date.now(), route, state: { busy, unread, reason: lastReason }
@@ -319,10 +356,10 @@
       document.removeEventListener("click", clicked, true);
       document.removeEventListener("submit", submitted, true);
       window.removeEventListener("pageshow", wake); window.removeEventListener("focus", wake);
+      window.removeEventListener("popstate", wake);
       try { chrome.storage.onChanged.removeListener(changed); chrome.runtime.onMessage.removeListener(status); } catch {}
       restoreIcons();
     }
   };
   window.addEventListener(HANDOFF_EVENT, handoff);
-  scan();
 })();

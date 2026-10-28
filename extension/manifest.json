@@ -1,8 +1,14 @@
 {
   "manifest_version": 3,
   "name": "ChatGPT Status Dot",
-  "version": "1.2.1",
-  "description": "Shows ChatGPT's status on the tab icon.",
+  "version": "1.2.2",
+  "description": "See when ChatGPT is working or a response is ready, with a colored dot on the tab icon.",
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
   "minimum_chrome_version": "120",
   "permissions": [
     "scripting",
@@ -29,6 +35,12 @@
     }
   ],
   "action": {
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png",
+      "48": "icons/icon-48.png",
+      "128": "icons/icon-128.png"
+    },
     "default_title": "ChatGPT Status Dot",
     "default_popup": "popup.html"
   }

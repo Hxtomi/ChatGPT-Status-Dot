@@ -4,7 +4,7 @@ const path = require('node:path');
 const { spawn } = require('node:child_process');
 const assert = require('node:assert/strict');
 const project = path.resolve(__dirname, '..');
-const extensionSource = path.join(project, 'extension');
+const extensionSource = process.env.BROWSER_EXTENSION_DIR || path.join(project, 'extension');
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 const cases = [];
 const external = [];
@@ -178,7 +178,7 @@ let browserVersion;
   console.log(`PASS ${cases.length}/${cases.length} upgrade scenarios`);
 })().catch(error => { console.error(error.stack); process.exitCode = 1; }).finally(async () => {
   fs.writeFileSync(reportPath, JSON.stringify({
-    date: new Date().toISOString(), browser: browserVersion?.product, source: 'Real browser with unpacked extension; synthetic ChatGPT DOM fixtures',
+    date: new Date().toISOString(), browser: browserVersion?.product, extensionDirectory: extensionSource, source: 'Real browser with unpacked extension; synthetic ChatGPT DOM fixtures',
     liveChatGPTVerified: false, cases, externalRequests: external, success: !process.exitCode
   }, null, 2));
   if (browser) await browser.send('Browser.close').catch(() => {});

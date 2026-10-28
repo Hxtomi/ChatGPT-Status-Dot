@@ -6,6 +6,7 @@
   const reset = document.getElementById("reset");
   const colors = ["color", "doneColor"];
   const settings = await chrome.storage.local.get(defaults);
+  let refreshSerial = 0;
 
   function showStatus(text, state = "idle") {
     status.textContent = text;
@@ -38,14 +39,16 @@
     });
   }
   async function refresh() {
+    const serial = ++refreshSerial;
     if (!enabled.checked) { showStatus("Indicator is off", "off"); return; }
     try {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
       const result = await chrome.tabs.sendMessage(tab.id, { type: "activity-dot:status" });
+      if (serial !== refreshSerial || !enabled.checked) return;
       if (result.busy) showStatus("ChatGPT is working", "working");
       else if (result.unread) showStatus("Response ready", "done");
       else showStatus("No response in progress");
-    } catch { showStatus("Open a ChatGPT tab to see its status"); }
+    } catch { if (serial === refreshSerial) showStatus("Open a ChatGPT tab to see its status"); }
   }
   enabled.disabled = false;
   enabled.addEventListener("change", async () => {
@@ -76,6 +79,10 @@
   });
   preview();
   await refresh();
+  // A toolbar popup can stay open for an entire response. Refresh while it is
+  // visible instead of leaving its initial Working snapshot on screen.
+  const timer = setInterval(() => { if (!document.hidden && !enabled.disabled) void refresh(); }, 1000);
+  window.addEventListener("pagehide", () => { clearInterval(timer); refreshSerial++; }, { once: true });
 })().catch(() => {
   const status = document.getElementById("status");
   status.textContent = "Couldn't load settings. Reopen this window to retry.";
