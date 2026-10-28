@@ -2,9 +2,7 @@
 
 See when ChatGPT finishes without switching back to the chat.
 
-<a href="https://microsoftedge.microsoft.com/addons/detail/chatgpt-status-dot/fhhcbllmkedcghmfoiimpogbjidmjhni">
-  <img src="media/edge-addons.svg" width="416" alt="Install ChatGPT Status Dot from Microsoft Edge Add-ons">
-</a>
+[![Microsoft Edge: Install](media/edge-addons.svg)](https://microsoftedge.microsoft.com/addons/detail/chatgpt-status-dot/fhhcbllmkedcghmfoiimpogbjidmjhni)
 
 Available on Microsoft Edge Add-ons. The shared source also works in other Chromium browsers.
 
