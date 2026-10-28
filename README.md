@@ -2,9 +2,11 @@
 
 See when ChatGPT finishes without switching back to the chat.
 
-**[Download the current source (1.2.2)](https://github.com/Hxtomi/ChatGPT-Status-Dot/archive/refs/heads/main.zip)**
+<a href="https://microsoftedge.microsoft.com/addons/detail/chatgpt-status-dot/fhhcbllmkedcghmfoiimpogbjidmjhni">
+  <img src="media/edge-addons.svg" width="416" alt="Install ChatGPT Status Dot from Microsoft Edge Add-ons">
+</a>
 
-The shared source works in Microsoft Edge and other Chromium browsers. Version 1.2.2 has been submitted to Microsoft Edge Add-ons and is **in review** as of 29 October 2026. The store listing will become available after approval.
+Available on Microsoft Edge Add-ons. The shared source also works in other Chromium browsers.
 
 - **Blue:** ChatGPT is working.
 - **Green:** a response finished while you were away.
@@ -14,7 +16,11 @@ The dot appears on the tab icon and clears when you return to the chat. If you'r
 
 ## Install
 
-1. Download the source ZIP above and extract the repository into a permanent folder.
+Install directly from [Microsoft Edge Add-ons](https://microsoftedge.microsoft.com/addons/detail/chatgpt-status-dot/fhhcbllmkedcghmfoiimpogbjidmjhni).
+
+For a manual installation from source:
+
+1. [Download the source ZIP](https://github.com/Hxtomi/ChatGPT-Status-Dot/archive/refs/heads/main.zip) and extract the repository into a permanent folder.
 2. In Microsoft Edge, open `edge://extensions` and turn on **Developer mode**.
 3. Click **Load unpacked** and select the `extension` folder inside the extracted repository.
 

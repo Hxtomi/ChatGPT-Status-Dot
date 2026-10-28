@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="416" height="88" viewBox="0 0 416 88" role="img" aria-labelledby="title description">
+  <title id="title">Install ChatGPT Status Dot for Microsoft Edge</title>
+  <desc id="description">Available on Edge Add-ons. Graphite badge with the Status Dot icon and a mint Install button.</desc>
+  <rect x=".5" y=".5" width="415" height="87" rx="19.5" fill="#20242f" stroke="#3d4962"/>
+  <g transform="translate(18 16) scale(.4375)">
+    <rect width="128" height="128" rx="28" fill="#20242f"/>
+    <rect x="21" y="25" width="81" height="64" rx="18" fill="#edf1fc"/>
+    <path d="m28 76-2 28 33-21" fill="#edf1fc"/>
+    <path d="M39 46h41M39 62h26" fill="none" stroke="#626c85" stroke-width="6" stroke-linecap="round"/>
+    <circle cx="99" cy="97" r="24" fill="#20242f"/>
+    <circle cx="99" cy="97" r="19" fill="#91acf2"/>
+    <circle cx="99" cy="97" r="12" fill="#65d6a0"/>
+  </g>
+  <g font-family="Segoe UI, Helvetica, Arial, sans-serif">
+    <text x="88" y="39" fill="#f1f5ff" font-size="19" font-weight="600">Microsoft Edge</text>
+    <text x="88" y="61" fill="#bac4d8" font-size="12.5">Available on Edge Add-ons</text>
+    <rect x="308" y="24" width="88" height="40" rx="12" fill="#65d6a0"/>
+    <text x="352" y="49.5" text-anchor="middle" fill="#14362c" font-size="15" font-weight="600">Install</text>
+  </g>
+</svg>

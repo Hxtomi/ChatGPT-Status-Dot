@@ -24,6 +24,7 @@
   "extension/popup.js",
   "media/settings.png",
   "media/icon.svg",
+  "media/edge-addons.svg",
   "package.json",
   "release-files.json",
   "scripts/package.py",
